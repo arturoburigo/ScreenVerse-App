@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react';
 import {View, Text, Image} from 'react-native'
 import * as WebBrowser from 'expo-web-browser'
 import * as Linking from 'expo-linking'
-
 import Button from '@/components/Button'
 import { useSSO } from '@clerk/clerk-expo';
 import { styles } from './styles';
 import logo from '../../../assets/images/logo.png'
-
+import { userService } from '@/services/userService';
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -17,6 +16,23 @@ export default function SignIn() {
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
     const [isGithubLoading, setIsGithubLoading] = useState(false)
     const { startSSOFlow } = useSSO()   
+
+    const createUserInBackend = async (authProvider: string, userData: any) => {
+        try {
+            const userRequest = {
+                clerkUserId: userData.id,
+                email: userData.emailAddresses[0].emailAddress,
+                firstName: userData.firstName || '',
+                lastName: userData.lastName || '',
+                authProvider: authProvider
+            };
+
+            await userService.createUser(userRequest);
+        } catch (error) {
+            console.error('Error creating user in backend:', error);
+        }
+    };
+
     async function signInWithGoogle() {
         try {
             setIsGoogleLoading(true)
@@ -24,14 +40,14 @@ export default function SignIn() {
                 strategy: 'oauth_google',
                 redirectUrl: redirectURL
             })
-            console.log('Resposta completa do fluxo OAuth:', google_oAuthFlow)
+            console.log('Resposta completa do fluxo OAuth:', google_oAuthFlow.authSessionResult)
             setIsGoogleLoading(false)
             if(google_oAuthFlow.authSessionResult?.type === 'success') {
                 if (google_oAuthFlow.setActive) {
                     await google_oAuthFlow.setActive({session: google_oAuthFlow.createdSessionId})
+                    await createUserInBackend('google', google_oAuthFlow.authSessionResult);
                 }
             }
-
         } catch (error) {
             console.error('Erro durante a autenticação:', error)
             setIsGoogleLoading(false)
@@ -50,14 +66,15 @@ export default function SignIn() {
             if(github_oAuthFlow.authSessionResult?.type === 'success') {
                 if (github_oAuthFlow.setActive) {
                     await github_oAuthFlow.setActive({session: github_oAuthFlow.createdSessionId})
+                    await createUserInBackend('github', github_oAuthFlow.authSessionResult);
                 }
             }
         } catch (error) {
             console.error(error)
+            setIsGithubLoading(false)
         }
     }
     
-
     useEffect(() => {
         WebBrowser.warmUpAsync()
 

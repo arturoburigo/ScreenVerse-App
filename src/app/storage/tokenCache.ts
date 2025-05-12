@@ -16,7 +16,10 @@ async function saveToken(key: string, value: string) {
     }
 }
 
-export const tokenCache = {
+const tokenCache = {
     getToken,
     saveToken
 }
+
+export { tokenCache };
+export default tokenCache;
