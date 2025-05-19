@@ -17,12 +17,14 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 32,
-        justifyContent: 'center',
-        alignItems : 'center',
-        gap: 12
+        backgroundColor: '#121212',
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+        paddingTop: 64,
     },
     text: {
         fontSize: 24,
-        fontWeight : 'bold'
+        fontWeight: 'bold',
+        color: '#fff',
     },
 });

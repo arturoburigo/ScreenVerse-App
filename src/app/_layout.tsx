@@ -1,14 +1,17 @@
-import {  Slot, useRouter } from "expo-router";
-import {ClerkProvider, SignedIn, useAuth} from '@clerk/clerk-expo'
+import { Slot, useRouter, usePathname } from "expo-router";
+import { ClerkProvider, SignedIn, useAuth } from '@clerk/clerk-expo'
 import { useEffect } from "react";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { tokenCache } from "./storage/tokenCache";
+import BottomNavbar from "@/components/BottomNavbar";
 
 const PUBLIC_CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY as string
 
 function InitialLayout () {
     const {isLoaded, isSignedIn} = useAuth()
     const router = useRouter()
+    const pathname = usePathname()
+
     useEffect(() => {
           if (!isLoaded) return
 
@@ -16,14 +19,20 @@ function InitialLayout () {
               router.replace("./auth")
           } else {
             router.replace("./public")  
-            
             return
-             
         }
     },[isSignedIn])
-    return isLoaded ? <Slot/> : (
+
+    const isAuthRoute = pathname.startsWith('/auth') || pathname === '/search' || pathname === '/profile';
+    
+    return isLoaded ? (
+        <View style={{ flex: 1 }}>
+            <Slot />
+            {isSignedIn && isAuthRoute && <BottomNavbar />}
+        </View>
+    ) : (
         <ActivityIndicator style={{flex:1 , justifyContent: "center", alignItems: "center"}}/>
-    )
+    );
 }
 
 export default function Layout() {
