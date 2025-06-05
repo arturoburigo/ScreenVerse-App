@@ -47,7 +47,6 @@ function InitialLayout() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
       <View style={{ flex: 1 }}>
-        <Header />
         <Slot />
         {isSignedIn && isAuthRoute && <BottomNavbar />}
       </View>

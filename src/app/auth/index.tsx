@@ -1,14 +1,14 @@
 import Button from "@/components/Button";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { Header } from "@/components/Header";
+import { useUser } from "@clerk/clerk-expo";
 import { Text, View, StyleSheet } from "react-native";
 
 export default function Home() {
   const { user } = useUser();
-  const { signOut } = useAuth();
   return (
     <View style={styles.container}>
+      <Header />
       <Text style={styles.text}>Hello, {user?.firstName || "Guest"}</Text>
-      <Button icon="exit" title="Sair" onPress={() => signOut()} />
     </View>
   );
 }
