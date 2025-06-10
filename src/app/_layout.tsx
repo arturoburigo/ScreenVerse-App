@@ -1,10 +1,9 @@
 import { Slot, useRouter, usePathname } from "expo-router";
-import { ClerkProvider, SignedIn, useAuth } from "@clerk/clerk-expo";
+import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { useEffect } from "react";
 import { ActivityIndicator, View, SafeAreaView } from "react-native";
 import { tokenCache } from "./storage/tokenCache";
 import BottomNavbar from "@/components/BottomNavbar";
-import { Header } from "@/components/Header";
 
 const PUBLIC_CLERK_PUBLISHABLE_KEY = process.env
   .EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY as string;
@@ -27,7 +26,7 @@ function InitialLayout() {
   const isAuthRoute =
     pathname.startsWith("/auth") ||
     pathname === "/search" ||
-    pathname === "/profile";
+    pathname === "/myspace";
 
   if (!isLoaded) {
     return (

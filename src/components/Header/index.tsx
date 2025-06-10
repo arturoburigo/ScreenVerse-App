@@ -6,7 +6,7 @@ export function Header() {
   const router = useRouter();
 
   const handleProfilePress = () => {
-    router.push("/profile");
+    router.push("/myspace");
   };
 
   return (

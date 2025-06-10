@@ -21,7 +21,7 @@ export default function BottomNavbar() {
     {
       name: "MySpace",
       icon: "person",
-      route: "/profile",
+      route: "/myspace",
     },
   ];
   return (

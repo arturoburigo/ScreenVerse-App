@@ -1,18 +1,22 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { Header } from "@/components/Header";
 import Button from "@/components/Button";
+import { Header } from "@/components/Header";
 
-export default function Profile() {
+export default function MySpace() {
   const { user } = useUser();
   const { signOut } = useAuth();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Profile</Text>
+      <Header />
+
+
+
+      {/* <Text style={styles.text}>My Space</Text>
       <Text style={styles.subtext}>Welcome, {user?.firstName}!</Text>
-      <Button icon="exit" title="Sair" onPress={() => signOut()} />
+      <Button icon="exit" title="Sair" onPress={() => signOut()} /> */}
     </View>
   );
 }
