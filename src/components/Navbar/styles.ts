@@ -25,6 +25,6 @@ export const styles = StyleSheet.create({
     color: "#676D75",
     fontSize: 12,
     marginTop: 4,
-    fontFamily: "Poppins",
+    fontFamily: "Poppins-Regular",
   },
 });

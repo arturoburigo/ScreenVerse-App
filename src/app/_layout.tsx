@@ -4,14 +4,29 @@ import { useEffect } from "react";
 import { ActivityIndicator, View, SafeAreaView } from "react-native";
 import { tokenCache } from "./storage/tokenCache";
 import BottomNavbar from "@/components/Navbar";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
 
 const PUBLIC_CLERK_PUBLISHABLE_KEY = process.env
   .EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY as string;
+
+// Prevent the splash screen from disappearing automatically
+SplashScreen.preventAutoHideAsync();
 
 function InitialLayout() {
   const { isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  // Load custom fonts
+  const [fontsLoaded, fontError] = useFonts({
+    "Poppins-Regular": require("../../assets/fonts/Poppins-Regular.ttf"),
+    "Poppins-Thin": require("../../assets/fonts/Poppins-Thin.ttf"),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || isLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     if (!isLoaded) return;
