@@ -3,7 +3,7 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { useEffect } from "react";
 import { ActivityIndicator, View, SafeAreaView } from "react-native";
 import { tokenCache } from "./storage/tokenCache";
-import BottomNavbar from "@/components/BottomNavbar";
+import BottomNavbar from "@/components/Navbar";
 
 const PUBLIC_CLERK_PUBLISHABLE_KEY = process.env
   .EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY as string;

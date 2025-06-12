@@ -4,10 +4,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
 import { styles } from "./styles";
 
+type NavigationItem = {
+  name: string;
+  icon: string;
+  route: "/auth" | "/search" | "/myspace";
+};
+
 export default function BottomNavbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const navigation = [
+  const navigation: NavigationItem[] = [
     {
       name: "Home",
       icon: "home",
@@ -25,7 +31,9 @@ export default function BottomNavbar() {
     },
   ];
   return (
-    <View style={styles.container}>      {navigation.map((item) => (
+    <View style={styles.container}>
+      {" "}
+      {navigation.map((item) => (
         <TouchableOpacity
           key={item.route}
           onPress={() => router.push(item.route)}
@@ -36,10 +44,12 @@ export default function BottomNavbar() {
             size={24}
             color={pathname === item.route ? "#B75A5A" : "#676D75"}
           />
-          <Text style={[
-            styles.buttonText,
-            pathname === item.route && { color: "#B75A5A" }
-          ]}>
+          <Text
+            style={[
+              styles.buttonText,
+              pathname === item.route && { color: "#B75A5A" },
+            ]}
+          >
             {item.name}
           </Text>
         </TouchableOpacity>
