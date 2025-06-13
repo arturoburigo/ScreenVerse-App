@@ -33,3 +33,5 @@ export const styles = StyleSheet.create({
     color: "#B75A5A",
   },
 });
+
+export default styles;

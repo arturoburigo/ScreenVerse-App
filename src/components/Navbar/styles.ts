@@ -27,4 +27,10 @@ export const styles = StyleSheet.create({
     marginTop: 4,
     fontFamily: "Poppins-Regular",
   },
+  image: {
+    width: 24,
+    height: 24,
+    marginBottom: 4,
+    color: "#676D75",
+  },
 });
