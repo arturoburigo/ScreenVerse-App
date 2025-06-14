@@ -3,15 +3,10 @@ import { View, TouchableOpacity, Text, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
 import { styles } from "./styles";
-import HomeIcon from "../../../assets/icons/home.svg";
-import SearchIcon from "../../../assets/icons/search.svg";
-import MyspaceIcon from "../../../assets/icons/myspace.svg";
-
-import { SvgProps } from "react-native-svg";
 
 type NavigationItem = {
   name: string;
-  icon: React.FC<SvgProps>;
+  icon: string;
   route: "/auth" | "/search" | "/myspace";
 };
 
@@ -21,17 +16,17 @@ export default function BottomNavbar() {
   const navigation: NavigationItem[] = [
     {
       name: "Home",
-      icon: HomeIcon,
+      icon: "home",
       route: "/auth",
     },
     {
       name: "Search",
-      icon: SearchIcon,
+      icon: "search",
       route: "/search",
     },
     {
       name: "MySpace",
-      icon: MyspaceIcon,
+      icon: "person",
       route: "/myspace",
     },
   ];
@@ -44,15 +39,8 @@ export default function BottomNavbar() {
           onPress={() => router.push(item.route)}
           style={styles.button}
         >
-          <item.icon width={24} height={24} style={styles.image} />
-          <Text
-            style={[
-              styles.buttonText,
-              pathname === item.route && { color: "#B75A5A" },
-            ]}
-          >
-            {item.name}
-          </Text>
+          <Ionicons name={item.icon as any} size={24} color="#676D75" />
+          <Text style={styles.buttonText}>{item.name}</Text>
         </TouchableOpacity>
       ))}
     </View>
