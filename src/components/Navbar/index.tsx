@@ -32,7 +32,6 @@ export default function BottomNavbar() {
   ];
   return (
     <View style={styles.container}>
-      {" "}
       {navigation.map((item) => (
         <TouchableOpacity
           key={item.route}

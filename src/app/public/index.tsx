@@ -5,7 +5,7 @@ import * as Linking from "expo-linking";
 import Button from "@/components/Button";
 import { useSSO } from "@clerk/clerk-expo";
 import { styles } from "./styles";
-import logo from "../../../assets/images/logo.png";
+const logo = require("../../../assets/images/logo.png");
 import { userService } from "@/services/userService";
 
 WebBrowser.maybeCompleteAuthSession();
