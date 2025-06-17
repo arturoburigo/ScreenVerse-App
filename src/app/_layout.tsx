@@ -19,6 +19,7 @@ function RootLayoutNav() {
   const router = useRouter();
   const pathname = usePathname();
   const [isInitialRender, setIsInitialRender] = useState(true);
+  const [activeTab, setActiveTab] = useState(pathname);
 
   // Load custom fonts
   const [fontsLoaded, fontError] = useFonts({
@@ -72,7 +73,9 @@ function RootLayoutNav() {
           <StatusBar barStyle="light-content" />
           <View style={{ flex: 1 }}>
             <Slot />
-            {isSignedIn && isAuthRoute && <BottomNavbar />}
+            {isSignedIn && isAuthRoute && (
+              <BottomNavbar activeRoute={activeTab} onTabChange={setActiveTab} />
+            )}
           </View>
         </SafeAreaView>
       </SafeAreaView>

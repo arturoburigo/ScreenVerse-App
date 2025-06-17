@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
   containerNav: {
     flexDirection: "row",
     gap: 12, // Espaço entre os botões
-    marginTop: 24, // Espaço abaixo do Header
+    marginTop: 10, // Espaço abaixo do Header
     marginBottom: 24,
   },
   // Estilo base para os botões
