@@ -1,9 +1,11 @@
 import { View, Image, TouchableOpacity, Text } from "react-native";
 import { styles } from "./styles";
 import { usePathname, useRouter } from "expo-router";
+import { useUser } from "@clerk/clerk-expo";
 
 export function Header() {
   const router = useRouter();
+  const { user } = useUser();
 
   const handleProfilePress = () => {
     router.push("/profile");
@@ -22,7 +24,7 @@ export function Header() {
         </View>
         <TouchableOpacity onPress={handleProfilePress}>
           <Image
-            source={require("../../../assets/images/icon.png")}
+            source={user?.imageUrl ? { uri: user.imageUrl } : require("../../../assets/images/icon.png")}
             style={styles.profileImage}
             resizeMode="cover"
           />

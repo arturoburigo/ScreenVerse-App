@@ -4,7 +4,6 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16, // Padding horizontal para não colar nas bordas
-    paddingTop: 8,
     backgroundColor: "#121212",
   },
   containerNav: {

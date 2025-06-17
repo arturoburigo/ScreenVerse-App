@@ -1,7 +1,8 @@
 import { Slot, useRouter, usePathname } from "expo-router";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
-import { useEffect } from "react";
-import { ActivityIndicator, View, SafeAreaView } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View, StatusBar } from "react-native";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { tokenCache } from "./storage/tokenCache";
 import BottomNavbar from "@/components/Navbar";
 import { useFonts } from "expo-font";
@@ -13,10 +14,11 @@ const PUBLIC_CLERK_PUBLISHABLE_KEY = process.env
 // Prevent the splash screen from disappearing automatically
 SplashScreen.preventAutoHideAsync();
 
-function InitialLayout() {
+function RootLayoutNav() {
   const { isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isInitialRender, setIsInitialRender] = useState(true);
 
   // Load custom fonts
   const [fontsLoaded, fontError] = useFonts({
@@ -29,21 +31,26 @@ function InitialLayout() {
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (isInitialRender) {
+      setIsInitialRender(false);
+      return;
+    }
+
+    if (!isLoaded || !fontsLoaded) return;
 
     if (isSignedIn) {
-      router.replace("/auth");
+      router.replace("/home");
     } else {
       router.replace("/public");
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, isLoaded, fontsLoaded, isInitialRender]);
 
   const isAuthRoute =
-    pathname.startsWith("/auth") ||
+    pathname === "/home" ||
     pathname === "/search" ||
     pathname === "/myspace";
 
-  if (!isLoaded) {
+  if (!isLoaded || !fontsLoaded) {
     return (
       <View
         style={{
@@ -59,22 +66,27 @@ function InitialLayout() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
-      <View style={{ flex: 1 }}>
-        <Slot />
-        {isSignedIn && isAuthRoute && <BottomNavbar />}
-      </View>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }} edges={["top"]}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#1D1F24" }} edges={["bottom"]}>
+          <StatusBar barStyle="light-content" />
+          <View style={{ flex: 1 }}>
+            <Slot />
+            {isSignedIn && isAuthRoute && <BottomNavbar />}
+          </View>
+        </SafeAreaView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
-export default function Layout() {
+export default function RootLayout() {
   return (
     <ClerkProvider
       publishableKey={PUBLIC_CLERK_PUBLISHABLE_KEY}
       tokenCache={tokenCache}
     >
-      <InitialLayout />
+      <RootLayoutNav />
     </ClerkProvider>
   );
 }

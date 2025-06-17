@@ -7,7 +7,7 @@ import { styles } from "./styles";
 type NavigationItem = {
   name: string;
   icon: string;
-  route: "/auth" | "/search" | "/myspace";
+  route: "/home" | "/search" | "/myspace";
 };
 
 export default function BottomNavbar() {
@@ -17,7 +17,7 @@ export default function BottomNavbar() {
     {
       name: "Home",
       icon: "home",
-      route: "/auth",
+      route: "/home",
     },
     {
       name: "Search",
