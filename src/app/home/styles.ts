@@ -9,10 +9,13 @@ export const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
+    fontSize: 16,
+    color: "#828282",
   },
+  content: {
+    flex: 1,
+    marginTop: 20,
+  }
 });
 
 export default styles;

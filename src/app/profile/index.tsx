@@ -1,13 +1,23 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import { useUser } from "@clerk/clerk-expo";
+import { useUser, useAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialIcons, Feather, AntDesign } from "@expo/vector-icons";
 import { styles } from "./styles";
 
 export default function Profile() {
   const { user } = useUser();
+  const { signOut } = useAuth();
   const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.replace("/public");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -42,7 +52,7 @@ export default function Profile() {
           <Feather name="help-circle" size={22} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Ajuda</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.buttonExit}>
+        <TouchableOpacity style={styles.buttonExit} onPress={handleSignOut}>
           <AntDesign name="closecircle" size={22} color="#F44" style={styles.buttonIcon} />
           <Text style={styles.buttonExitText}>Sair</Text>
         </TouchableOpacity>

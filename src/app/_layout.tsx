@@ -49,7 +49,8 @@ function RootLayoutNav() {
   const isAuthRoute =
     pathname === "/home" ||
     pathname === "/search" ||
-    pathname === "/myspace";
+    pathname === "/myspace" ||
+    pathname === "/profile";
 
   if (!isLoaded || !fontsLoaded) {
     return (
@@ -69,12 +70,16 @@ function RootLayoutNav() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }} edges={["top"]}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#1D1F24" }} edges={["bottom"]}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }} edges={["bottom"]}>
           <StatusBar barStyle="light-content" />
           <View style={{ flex: 1 }}>
             <Slot />
             {isSignedIn && isAuthRoute && (
-              <BottomNavbar activeRoute={activeTab} onTabChange={setActiveTab} />
+              <View style={{ backgroundColor: "#121212" }}>
+                <SafeAreaView edges={["bottom"]}>
+                  <BottomNavbar activeRoute={activeTab} onTabChange={setActiveTab} />
+                </SafeAreaView>
+              </View>
             )}
           </View>
         </SafeAreaView>
@@ -84,6 +89,15 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  if (!PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    console.error("Missing Clerk Publishable Key");
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" }}>
+        <ActivityIndicator size="large" color="#B75A5A" />
+      </View>
+    );
+  }
+
   return (
     <ClerkProvider
       publishableKey={PUBLIC_CLERK_PUBLISHABLE_KEY}
