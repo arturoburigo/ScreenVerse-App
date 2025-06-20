@@ -51,6 +51,16 @@ export default function MySpace() {
   const navButtons = ["Watchlist", "Rated"];
   const filterButtons = ["Filmes", "Séries"];
 
+  const filteredRatedMovies = ratedMovies.filter((movie: any) => {
+    if (activeFilter === "Filmes") {
+      return movie.type === "movie";
+    }
+    if (activeFilter === "Séries") {
+      return movie.type === "series";
+    }
+    return false;
+  });
+
   return (
     <View style={styles.container}>
       <Header />
@@ -112,7 +122,7 @@ export default function MySpace() {
       <View style={styles.contentArea}>
         {activeTab === "Rated" ? (
           <ScrollView>
-            {ratedMovies.map((movie: any, index) => (
+            {filteredRatedMovies.map((movie: any, index) => (
               <View key={index} style={styles.movieCard}>
                 <Image
                   source={{ uri: movie.poster }}
