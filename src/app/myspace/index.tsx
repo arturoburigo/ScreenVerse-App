@@ -32,10 +32,10 @@ export default function MySpace() {
     fetchRatedMovies();
   }, []);
 
-  const deleteReview = async (id: string) => {
+  const deleteReview = async (idRate: string) => {
     try {
       const updatedReviews = ratedMovies.filter(
-        (movie: any) => movie.id !== id
+        (movie: any) => movie.idRate !== idRate
       );
       await AsyncStorage.setItem("ratedMovies", JSON.stringify(updatedReviews));
       setRatedMovies(updatedReviews);
@@ -44,8 +44,8 @@ export default function MySpace() {
     }
   };
 
-  const editReview = (id: string) => {
-    router.push({ pathname: "/rate", params: { id } });
+  const editReview = (id: string, idRate?: string) => {
+    router.push({ pathname: "/rate", params: { id, idRate } });
   };
 
   const navButtons = ["Watchlist", "Rated"];
@@ -125,13 +125,13 @@ export default function MySpace() {
                 </View>
                 <View style={styles.actionButtons}>
                   <TouchableOpacity
-                    onPress={() => deleteReview(movie.id)}
+                    onPress={() => deleteReview(movie.idRate)}
                     style={styles.deleteButton}
                   >
                     <FontAwesome name="times" size={20} color="#FFF" />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() => editReview(movie.id)}
+                    onPress={() => editReview(movie.id, movie.idRate)}
                     style={styles.editButton}
                   >
                     <FontAwesome name="pencil" size={20} color="#FFF" />
