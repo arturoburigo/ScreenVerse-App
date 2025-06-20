@@ -5,7 +5,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#121212",
     alignItems: "center",
-    paddingTop: 20,
+    paddingHorizontal: 16,
   },
   title: {
     color: "#fff",
@@ -23,6 +23,9 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     marginBottom: 20,
   },
+  star: {
+    marginHorizontal: 8,
+  },
   reviewText: {
     color: "#fff",
     fontSize: 16,
@@ -31,14 +34,18 @@ export const styles = StyleSheet.create({
   input: {
     backgroundColor: "#1E1E1E",
     color: "#fff",
-    width: "80%",
+    width: "90%",
+    height: 100,
     padding: 15,
     borderRadius: 10,
     marginBottom: 20,
-    textAlign: "center",
+    textAlign: "left",
+    textAlignVertical: "top",
   },
   button: {
-    backgroundColor: "#28a745",
+    width: "60%",
+    alignItems: "center",
+    backgroundColor: "#3D9E5F",
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 25,

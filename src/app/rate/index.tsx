@@ -14,7 +14,21 @@ export default function Rate() {
   const [review, setReview] = useState("");
 
   const handleRating = (rate: number) => {
-    setRating(rate);
+    if (rating === rate - 0.5) {
+      setRating(rate);
+    } else {
+      setRating(rate - 0.5);
+    }
+  };
+
+  const renderStar = (rate: number) => {
+    if (rate <= rating) {
+      return "star";
+    } else if (rate - 0.5 === rating) {
+      return "star-half-o";
+    } else {
+      return "star-o";
+    }
   };
 
   return (
@@ -25,11 +39,15 @@ export default function Rate() {
 
       <View style={styles.starsContainer}>
         {[1, 2, 3, 4, 5].map((rate) => (
-          <TouchableOpacity key={rate} onPress={() => handleRating(rate)}>
+          <TouchableOpacity
+            key={rate}
+            onPress={() => handleRating(rate)}
+            style={styles.star}
+          >
             <FontAwesome
-              name={rate <= rating ? "star" : "star-o"}
+              name={renderStar(rate)}
               size={40}
-              color={rate <= rating ? "#FFD700" : "#FFF"}
+              color={rate - 0.5 <= rating ? "#FFD700" : "#FFF"}
             />
           </TouchableOpacity>
         ))}
