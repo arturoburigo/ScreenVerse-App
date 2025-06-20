@@ -5,6 +5,7 @@ import SearchBar from "@/components/SearchBar";
 
 export default function Search() {
   const [search, setSearch] = useState("");
+
   return (
     <View style={styles.container}>
       <Header />
@@ -20,7 +21,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#121212",
     justifyContent: "flex-start",
     alignItems: "flex-start",
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
   },
   text: {
     fontSize: 24,

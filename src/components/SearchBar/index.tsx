@@ -9,10 +9,14 @@ type SearchBarProps = {
   placeholder?: string;
 };
 
-export default function SearchBar({ value, onChangeText, placeholder = "Buscar..." }: SearchBarProps) {
+export default function SearchBar({
+  value,
+  onChangeText,
+  placeholder = "Buscar...",
+}: SearchBarProps) {
   return (
     <View style={styles.container}>
-      <Ionicons name="search" size={20} color="#676D75" style={styles.icon} />
+      <Ionicons name="search" size={24} color="#676D75" style={styles.icon} />
       <TextInput
         style={styles.input}
         value={value}
@@ -22,4 +26,4 @@ export default function SearchBar({ value, onChangeText, placeholder = "Buscar..
       />
     </View>
   );
-} 
+}

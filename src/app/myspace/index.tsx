@@ -9,9 +9,11 @@ export default function MySpace() {
   const { signOut } = useAuth();
 
   // 1. Estado para controlar a aba ativa
-  const [activeTab, setActiveTab] = useState("My list");
+  const [activeTab, setActiveTab] = useState("Watchlist");
+  const [activeFilter, setActiveFilter] = useState("Filmes");
 
-  const navButtons = ["My list", "Series", "Movies"];
+  const navButtons = ["Watchlist", "Rated"];
+  const filterButtons = ["Filmes", "Séries"];
 
   return (
     <View style={styles.container}>
@@ -42,8 +44,39 @@ export default function MySpace() {
         ))}
       </View>
 
+      {/* 2. Container da navegação */}
+      <View style={styles.containerNav}>
+        {filterButtons.map((title) => (
+          <TouchableOpacity
+            key={title}
+            // 3. Estilo condicional para o botão
+            style={[
+              styles.buttonNav,
+              activeFilter === title
+                ? styles.activeButton
+                : styles.inactiveButton,
+            ]}
+            onPress={() => setActiveFilter(title)}
+          >
+            {/* 4. Estilo condicional para o texto */}
+            <Text
+              style={[
+                styles.buttonText,
+                activeFilter === title
+                  ? styles.activeText
+                  : styles.inactiveText,
+              ]}
+            >
+              {title}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <View style={styles.contentArea}>
-        <Text style={styles.text}>Conteúdo de {activeTab}</Text>
+        <Text style={styles.text}>
+          Conteúdo de {activeTab} - {activeFilter}
+        </Text>
       </View>
     </View>
   );

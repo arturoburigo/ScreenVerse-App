@@ -6,9 +6,9 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#23242A",
     borderRadius: 16,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    marginVertical: 12,
+    marginVertical: 16,
   },
   icon: {
     marginRight: 8,
@@ -19,4 +19,4 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Poppins-Regular",
   },
-}); 
+});
