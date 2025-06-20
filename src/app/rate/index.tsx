@@ -2,7 +2,7 @@ import { View, Text, Image, TextInput, TouchableOpacity } from "react-native";
 import { styles } from "./styles";
 import { useLocalSearchParams } from "expo-router";
 import movies from "@/utils/movies.json";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
@@ -13,6 +13,24 @@ export default function Rate() {
   const movie = movies.find((m) => String(m.id) === id);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
+
+  useEffect(() => {
+    const loadPreviousReview = async () => {
+      try {
+        const savedMovies = JSON.parse(
+          (await AsyncStorage.getItem("ratedMovies")) || "[]"
+        );
+        const movieReview = savedMovies.find((m: any) => m.id === movie?.id);
+        if (movieReview) {
+          setRating(movieReview.rating);
+          setReview(movieReview.review);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar avaliação anterior:", error);
+      }
+    };
+    loadPreviousReview();
+  }, [movie?.id]);
 
   const handleRating = (rate: number) => {
     if (rating === rate - 0.5) {
