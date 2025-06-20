@@ -1,16 +1,52 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Header } from "@/components/Header";
 import { styles } from "./styles";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { router } from "expo-router";
 
 export default function MySpace() {
   const { user } = useUser();
   const { signOut } = useAuth();
 
-  // 1. Estado para controlar a aba ativa
   const [activeTab, setActiveTab] = useState("Watchlist");
   const [activeFilter, setActiveFilter] = useState("Filmes");
+  const [ratedMovies, setRatedMovies] = useState([]);
+
+  useEffect(() => {
+    const fetchRatedMovies = async () => {
+      const savedMovies = JSON.parse(
+        (await AsyncStorage.getItem("ratedMovies")) || "[]"
+      );
+      setRatedMovies(savedMovies);
+    };
+    fetchRatedMovies();
+  }, []);
+
+  const deleteReview = async (id: string) => {
+    try {
+      const updatedReviews = ratedMovies.filter(
+        (movie: any) => movie.id !== id
+      );
+      await AsyncStorage.setItem("ratedMovies", JSON.stringify(updatedReviews));
+      setRatedMovies(updatedReviews);
+    } catch (error) {
+      console.error("Erro ao apagar avaliação:", error);
+    }
+  };
+
+  const editReview = (id: string) => {
+    router.push({ pathname: "/rate", params: { id } });
+  };
 
   const navButtons = ["Watchlist", "Rated"];
   const filterButtons = ["Filmes", "Séries"];
@@ -74,9 +110,41 @@ export default function MySpace() {
       </View>
 
       <View style={styles.contentArea}>
-        <Text style={styles.text}>
-          Conteúdo de {activeTab} - {activeFilter}
-        </Text>
+        {activeTab === "Rated" ? (
+          <ScrollView>
+            {ratedMovies.map((movie: any, index) => (
+              <View key={index} style={styles.movieCard}>
+                <Image
+                  source={{ uri: movie.poster }}
+                  style={styles.moviePoster}
+                />
+                <View style={styles.movieInfo}>
+                  <Text style={styles.movieTitle}>{movie.title}</Text>
+                  <Text style={styles.movieRating}>Rating: {movie.rating}</Text>
+                  <Text style={styles.movieReview}>{movie.review}</Text>
+                </View>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    onPress={() => deleteReview(movie.id)}
+                    style={styles.deleteButton}
+                  >
+                    <FontAwesome name="times" size={20} color="#FFF" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => editReview(movie.id)}
+                    style={styles.editButton}
+                  >
+                    <FontAwesome name="pencil" size={20} color="#FFF" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        ) : (
+          <Text style={styles.text}>
+            Conteúdo de {activeTab} - {activeFilter}
+          </Text>
+        )}
       </View>
     </View>
   );

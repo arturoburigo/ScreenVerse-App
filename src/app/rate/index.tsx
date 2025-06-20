@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Rate() {
   const { id } = useLocalSearchParams();
@@ -28,6 +29,28 @@ export default function Rate() {
       return "star-half-o";
     } else {
       return "star-o";
+    }
+  };
+
+  const saveReview = async () => {
+    try {
+      const existingReviews = JSON.parse(
+        (await AsyncStorage.getItem("ratedMovies")) || "[]"
+      );
+      const newReview = {
+        id: movie?.id,
+        title: movie?.title,
+        poster: movie?.posterMedium,
+        rating,
+        review,
+      };
+      await AsyncStorage.setItem(
+        "ratedMovies",
+        JSON.stringify([...existingReviews, newReview])
+      );
+      alert("Avaliação salva com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar avaliação:", error);
     }
   };
 
@@ -60,7 +83,7 @@ export default function Rate() {
         value={review}
         onChangeText={setReview}
       />
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={saveReview}>
         <Text style={styles.buttonText}>Salvar</Text>
       </TouchableOpacity>
       <Navbar />
