@@ -1,18 +1,11 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-} from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, Text, TouchableOpacity, Image, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Header } from "@/components/Header";
 import { styles } from "./styles";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 export default function MySpace() {
   const { user } = useUser();
@@ -20,17 +13,29 @@ export default function MySpace() {
 
   const [activeTab, setActiveTab] = useState("Watchlist");
   const [activeFilter, setActiveFilter] = useState("Filmes");
-  const [ratedMovies, setRatedMovies] = useState([]);
+  const [ratedMovies, setRatedMovies] = useState<any[]>([]);
+  const [watchlistMovies, setWatchlistMovies] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchRatedMovies = async () => {
-      const savedMovies = JSON.parse(
-        (await AsyncStorage.getItem("ratedMovies")) || "[]"
-      );
-      setRatedMovies(savedMovies);
-    };
-    fetchRatedMovies();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchLists = async () => {
+        try {
+          const savedRated = JSON.parse(
+            (await AsyncStorage.getItem("ratedMovies")) || "[]"
+          );
+          setRatedMovies(savedRated);
+
+          const savedWatchlist = JSON.parse(
+            (await AsyncStorage.getItem("watchlistMovies")) || "[]"
+          );
+          setWatchlistMovies(savedWatchlist);
+        } catch (error) {
+          console.error("Erro ao buscar listas:", error);
+        }
+      };
+      fetchLists();
+    }, [])
+  );
 
   const deleteReview = async (idRate: string) => {
     try {
@@ -48,16 +53,46 @@ export default function MySpace() {
     router.push({ pathname: "/rate", params: { id, idRate } });
   };
 
+  const deleteFromWatchlist = async (id: string) => {
+    try {
+      const updatedWatchlist = watchlistMovies.filter((movie: any) => movie.id !== id);
+      await AsyncStorage.setItem(
+        "watchlistMovies",
+        JSON.stringify(updatedWatchlist)
+      );
+      setWatchlistMovies(updatedWatchlist);
+    } catch (error) {
+      console.error("Erro ao remover da watchlist:", error);
+    }
+  };
+
+  const markAsWatched = async (id: string) => {
+    try {
+      const updatedWatchlist = watchlistMovies.map((movie: any) =>
+        movie.id === id ? { ...movie, watched: !movie.watched } : movie
+      );
+      await AsyncStorage.setItem(
+        "watchlistMovies",
+        JSON.stringify(updatedWatchlist)
+      );
+      setWatchlistMovies(updatedWatchlist);
+    } catch (error) {
+      console.error("Erro ao marcar como assistido:", error);
+    }
+  };
+
   const navButtons = ["Watchlist", "Rated"];
   const filterButtons = ["Filmes", "Séries"];
 
   const filteredRatedMovies = ratedMovies.filter((movie: any) => {
-    if (activeFilter === "Filmes") {
-      return movie.type === "movie";
-    }
-    if (activeFilter === "Séries") {
-      return movie.type === "series";
-    }
+    if (activeFilter === "Filmes") return movie.type === "movie";
+    if (activeFilter === "Séries") return movie.type === "series";
+    return false;
+  });
+
+  const filteredWatchlistMovies = watchlistMovies.filter((movie: any) => {
+    if (activeFilter === "Filmes") return movie.type === "movie";
+    if (activeFilter === "Séries") return movie.type === "series";
     return false;
   });
 
@@ -65,19 +100,16 @@ export default function MySpace() {
     <View style={styles.container}>
       <Header />
 
-      {/* 2. Container da navegação */}
       <View style={styles.containerNav}>
         {navButtons.map((title) => (
           <TouchableOpacity
             key={title}
-            // 3. Estilo condicional para o botão
             style={[
               styles.buttonNav,
               activeTab === title ? styles.activeButton : styles.inactiveButton,
             ]}
             onPress={() => setActiveTab(title)}
           >
-            {/* 4. Estilo condicional para o texto */}
             <Text
               style={[
                 styles.buttonText,
@@ -90,12 +122,10 @@ export default function MySpace() {
         ))}
       </View>
 
-      {/* 2. Container da navegação */}
       <View style={styles.containerNav}>
         {filterButtons.map((title) => (
           <TouchableOpacity
             key={title}
-            // 3. Estilo condicional para o botão
             style={[
               styles.buttonNav,
               activeFilter === title
@@ -104,7 +134,6 @@ export default function MySpace() {
             ]}
             onPress={() => setActiveFilter(title)}
           >
-            {/* 4. Estilo condicional para o texto */}
             <Text
               style={[
                 styles.buttonText,
@@ -122,8 +151,8 @@ export default function MySpace() {
       <View style={styles.contentArea}>
         {activeTab === "Rated" ? (
           <ScrollView>
-            {filteredRatedMovies.map((movie: any, index) => (
-              <View key={index} style={styles.movieCard}>
+            {filteredRatedMovies.map((movie: any) => (
+              <View key={movie.idRate} style={styles.movieCard}>
                 <Image
                   source={{ uri: movie.poster }}
                   style={styles.moviePoster}
@@ -138,7 +167,7 @@ export default function MySpace() {
                     onPress={() => deleteReview(movie.idRate)}
                     style={styles.deleteButton}
                   >
-                    <FontAwesome name="times" size={20} color="#FFF" />
+                    <FontAwesome name="trash" size={20} color="#FFF" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => editReview(movie.id, movie.idRate)}
@@ -151,9 +180,40 @@ export default function MySpace() {
             ))}
           </ScrollView>
         ) : (
-          <Text style={styles.text}>
-            Conteúdo de {activeTab} - {activeFilter}
-          </Text>
+          <ScrollView>
+            {filteredWatchlistMovies.map((movie: any) => (
+              <View
+                key={movie.id}
+                style={[styles.movieCard, movie.watched && { opacity: 0.6 }]}
+              >
+                <Image
+                  source={{ uri: movie.poster }}
+                  style={styles.moviePoster}
+                />
+                <View style={styles.movieInfo}>
+                  <Text style={styles.movieTitle}>{movie.title}</Text>
+                </View>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    onPress={() => deleteFromWatchlist(movie.id)}
+                    style={styles.deleteButton}
+                  >
+                    <FontAwesome name="trash" size={20} color="#FFF" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => markAsWatched(movie.id)}
+                    style={styles.editButton}
+                  >
+                    <FontAwesome
+                      name={movie.watched ? "eye-slash" : "eye"}
+                      size={20}
+                      color="#FFF"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
         )}
       </View>
     </View>

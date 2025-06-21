@@ -5,6 +5,7 @@ import movies from "@/utils/movies.json";
 import { styles } from "./styles";
 import { Header } from "@/components/Header";
 import BottomNavbar from "@/components/Navbar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function MovieDetails() {
   const { id } = useLocalSearchParams();
@@ -21,6 +22,45 @@ export default function MovieDetails() {
       </View>
     );
   }
+
+  const saveWatchlist = async () => {
+    try {
+      const existingWatchlist = JSON.parse(
+        (await AsyncStorage.getItem("watchlistMovies")) || "[]"
+      );
+
+      // Verifica se o filme já está na watchlist para não duplicar
+      const isAlreadyInWatchlist = existingWatchlist.some(
+        (item: any) => item.id === movie?.id
+      );
+
+      if (isAlreadyInWatchlist) {
+        console.log("Filme já está na watchlist.");
+        router.push("/myspace"); // Apenas navega se já existir
+        return;
+      }
+
+      const addWatchlist = {
+        id: movie?.id,
+        title: movie?.title,
+        poster: movie?.posterMedium,
+        type: movie?.type,
+        watched: false, // Adiciona o estado 'watched'
+      };
+
+      const updatedWatchlist = [...existingWatchlist, addWatchlist];
+
+      // Salva na chave correta: "watchlistMovies"
+      await AsyncStorage.setItem(
+        "watchlistMovies",
+        JSON.stringify(updatedWatchlist)
+      );
+
+      router.push("/myspace");
+    } catch (error) {
+      console.error("Erro ao salvar na watchlist:", error);
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
@@ -59,7 +99,9 @@ export default function MovieDetails() {
         </View>
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.watchlistBtn}>
-            <Text style={styles.btnText}>Watchlist</Text>
+            <Text style={styles.btnText} onPress={saveWatchlist}>
+              Watchlist
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.rateBtn}
