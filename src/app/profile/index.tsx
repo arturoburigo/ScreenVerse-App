@@ -1,18 +1,26 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import { useUser, useAuth } from "@clerk/clerk-expo";
+import { useUser, useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialIcons, Feather, AntDesign } from "@expo/vector-icons";
 import { styles } from "./styles";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Profile() {
   const { user } = useUser();
-  const { signOut } = useAuth();
+  const { signOut } = useClerkAuth();
+  const { logout: logoutBackend } = useAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {
     try {
+      // Limpar tokens do backend
+      await logoutBackend();
+      
+      // Fazer logout do Clerk
       await signOut();
+      
+      // Redirecionar para tela de login
       router.replace("/public");
     } catch (error) {
       console.error("Error signing out:", error);
