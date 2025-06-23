@@ -3,10 +3,9 @@ import { View, Text, Image, Alert } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import Button from "@/components/Button";
-import { useSSO } from "@clerk/clerk-expo";
+import { useSSO, useAuth, useClerk } from "@clerk/clerk-expo";
 import { styles } from "./styles";
 const logo = require("../../../assets/images/logo.png");
-import { userService } from "@/services/userService";
 import { authService } from "@/services/authService";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -17,6 +16,8 @@ export default function SignIn() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const { startSSOFlow } = useSSO();
+  const { isLoaded, isSignedIn } = useAuth();
+  const clerk = useClerk();
 
   const showError = (title: string, message: string) => {
     Alert.alert(title, message, [{ text: "OK" }]);
@@ -35,8 +36,6 @@ export default function SignIn() {
       let email = "";
       if (userData.emailAddresses && userData.emailAddresses[0] && userData.emailAddresses[0].emailAddress) {
         email = userData.emailAddresses[0].emailAddress;
-      } else if (userData.email) {
-        email = userData.email;
       } else if (userData.primaryEmailAddress && userData.primaryEmailAddress.emailAddress) {
         email = userData.primaryEmailAddress.emailAddress;
       }
@@ -45,21 +44,9 @@ export default function SignIn() {
         throw new Error("Dados do usuário inválidos: Email não encontrado");
       }
 
-      // Extrair nome de diferentes possíveis localizações
-      let firstName = "";
-      let lastName = "";
-      
-      if (userData.firstName) {
-        firstName = userData.firstName;
-      } else if (userData.givenName) {
-        firstName = userData.givenName;
-      }
-      
-      if (userData.lastName) {
-        lastName = userData.lastName;
-      } else if (userData.familyName) {
-        lastName = userData.familyName;
-      }
+      // Extrair nome
+      const firstName = userData.firstName || "";
+      const lastName = userData.lastName || "";
 
       const userRequest = {
         clerkUserId: userData.id,
@@ -79,7 +66,44 @@ export default function SignIn() {
       } else {
         showError("Erro de Autenticação", "Erro desconhecido ao criar usuário no backend");
       }
-      throw error; // Re-throw para que o erro seja tratado no componente
+      throw error;
+    }
+  };
+
+  const handleAuthenticationSuccess = async (authProvider: string, sessionId: string) => {
+    try {
+      console.log("Waiting for user session to load...");
+      
+      // Wait and retry to get the user data
+      let attempts = 0;
+      let currentUser = null;
+      
+      while (attempts < 10 && !currentUser) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        currentUser = clerk.user;
+        attempts++;
+        console.log(`Attempt ${attempts}: User found:`, !!currentUser);
+      }
+      
+      if (!currentUser) {
+        // Try to get the user from session
+        const session = clerk.session;
+        if (session && session.user) {
+          currentUser = session.user;
+          console.log("Got user from session:", !!currentUser);
+        }
+      }
+      
+      if (!currentUser) {
+        throw new Error("Usuário não encontrado após múltiplas tentativas");
+      }
+
+      console.log("User object from Clerk:", JSON.stringify(currentUser, null, 2));
+      
+      await createUserInBackend(authProvider, currentUser);
+    } catch (error) {
+      console.error("Erro ao processar usuário:", error);
+      showError("Erro", "Erro ao processar dados do usuário. Tente novamente.");
     }
   };
 
@@ -90,20 +114,19 @@ export default function SignIn() {
         strategy: "oauth_google",
         redirectUrl: redirectURL,
       });
-      console.log(
-        "Resposta completa do fluxo OAuth:",
-        google_oAuthFlow.authSessionResult
-      );
+      
+      console.log("Google OAuth Flow Result:", google_oAuthFlow.authSessionResult);
       
       if (google_oAuthFlow.authSessionResult?.type === "success") {
         if (google_oAuthFlow.setActive) {
           await google_oAuthFlow.setActive({
             session: google_oAuthFlow.createdSessionId,
           });
-          await createUserInBackend(
-            "google",
-            google_oAuthFlow.authSessionResult
-          );
+          
+          // Handle the authentication success
+          if (google_oAuthFlow.createdSessionId) {
+            await handleAuthenticationSuccess("google", google_oAuthFlow.createdSessionId);
+          }
         }
       }
     } catch (error) {
@@ -122,15 +145,18 @@ export default function SignIn() {
         redirectUrl: redirectURL,
       });
 
+      console.log("GitHub OAuth Flow Result:", github_oAuthFlow.authSessionResult);
+
       if (github_oAuthFlow.authSessionResult?.type === "success") {
         if (github_oAuthFlow.setActive) {
           await github_oAuthFlow.setActive({
             session: github_oAuthFlow.createdSessionId,
           });
-          await createUserInBackend(
-            "github",
-            github_oAuthFlow.authSessionResult
-          );
+          
+          // Handle the authentication success
+          if (github_oAuthFlow.createdSessionId) {
+            await handleAuthenticationSuccess("github", github_oAuthFlow.createdSessionId);
+          }
         }
       }
     } catch (error) {

@@ -30,7 +30,7 @@ export default function Profile() {
   return (
     <View style={styles.container}>
       {/* Botão de voltar */}
-      <TouchableOpacity style={styles.backButton} onPress={() => router.push("/home")}> 
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}> 
         <Ionicons name="arrow-back" size={28} color="#fff" />
       </TouchableOpacity>
 

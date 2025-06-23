@@ -2,14 +2,38 @@ import React from "react";
 import { View, Text, Image, ScrollView, TouchableOpacity } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import movies from "@/utils/movies.json";
+import { Ionicons, MaterialIcons, Feather, AntDesign } from "@expo/vector-icons";
 import { styles } from "./styles";
 import { Header } from "@/components/Header";
 import BottomNavbar from "@/components/Navbar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function MovieDetails() {
-  const { id } = useLocalSearchParams();
-  const movie = movies.find((m) => String(m.id) === String(id));
+  const params = useLocalSearchParams();
+  
+  // Verificar se veio da busca (com parâmetros) ou da lista local
+  const isFromSearch = params.title && params.poster;
+  
+  let movie;
+  
+  if (isFromSearch) {
+    // Dados vindos da busca
+    movie = {
+      id: params.id,
+      title: params.title as string,
+      posterMedium: params.poster as string,
+      type: params.type as string,
+      year: params.year as string,
+      plot_overview: params.description as string,
+      user_rating: "N/A",
+      genre_names: [],
+      sources: [],
+      similar_titles: []
+    };
+  } else {
+    // Buscar na lista local de filmes
+    movie = movies.find((m) => String(m.id) === String(params.id));
+  }
 
   // Busca seasons e episodes do primeiro source, se existir
   const seasons = movie?.sources?.[0]?.seasons;
@@ -67,6 +91,9 @@ export default function MovieDetails() {
       <View style={{ paddingHorizontal: 16 }}>
         <Header />
       </View>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}> 
+        <Ionicons name="arrow-back" size={28} color="#fff" />
+      </TouchableOpacity>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Image source={{ uri: movie.posterMedium }} style={styles.poster} />
@@ -77,26 +104,41 @@ export default function MovieDetails() {
             ) : null}
             <Text style={styles.info}>{movie.year}</Text>
             {episodes ? <Text style={styles.info}>{episodes} eps</Text> : null}
-            <Text style={styles.info}>{movie.genre_names?.join(", ")}</Text>
-            <Text style={styles.imdb}>IMDb : {movie.user_rating}</Text>
-            <Text style={styles.platform}>{movie.sources?.[0]?.name}</Text>
+            {movie.genre_names?.length > 0 && (
+              <Text style={styles.info}>{movie.genre_names.join(", ")}</Text>
+            )}
+            {movie.user_rating !== "N/A" && (
+              <Text style={styles.imdb}>IMDb : {movie.user_rating}</Text>
+            )}
+            {movie.sources?.[0]?.name && (
+              <Text style={styles.platform}>{movie.sources[0].name}</Text>
+            )}
           </View>
         </View>
-        <Text style={styles.overview}>{movie.plot_overview}</Text>
-        <Text style={styles.section}>Relacionados</Text>
-        <View style={styles.relatedRow}>
-          {movie.similar_titles?.slice(0, 4).map((relatedId, idx) => {
-            const related = movies.find((m) => m.id === relatedId);
-            if (!related) return null;
-            return (
-              <Image
-                key={idx}
-                source={{ uri: related.posterMedium }}
-                style={styles.relatedImg}
-              />
-            );
-          })}
-        </View>
+        {movie.plot_overview && (
+          <Text style={styles.overview}>{movie.plot_overview}</Text>
+        )}
+        
+        {/* Seção de relacionados apenas se houver dados */}
+        {movie.similar_titles && movie.similar_titles.length > 0 && (
+          <>
+            <Text style={styles.section}>Relacionados</Text>
+            <View style={styles.relatedRow}>
+              {movie.similar_titles?.slice(0, 4).map((relatedId, idx) => {
+                const related = movies.find((m) => m.id === relatedId);
+                if (!related) return null;
+                return (
+                  <Image
+                    key={idx}
+                    source={{ uri: related.posterMedium }}
+                    style={styles.relatedImg}
+                  />
+                );
+              })}
+            </View>
+          </>
+        )}
+        
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.watchlistBtn}>
             <Text style={styles.btnText} onPress={saveWatchlist}>

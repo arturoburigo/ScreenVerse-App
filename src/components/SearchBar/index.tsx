@@ -6,12 +6,14 @@ import { styles } from "./styles";
 type SearchBarProps = {
   value: string;
   onChangeText: (text: string) => void;
+  onSubmitEditing?: () => void;
   placeholder?: string;
 };
 
 export default function SearchBar({
   value,
   onChangeText,
+  onSubmitEditing,
   placeholder = "Buscar...",
 }: SearchBarProps) {
   return (
@@ -21,8 +23,10 @@ export default function SearchBar({
         style={styles.input}
         value={value}
         onChangeText={onChangeText}
+        onSubmitEditing={onSubmitEditing}
         placeholder={placeholder}
         placeholderTextColor="#676D75"
+        returnKeyType="search"
       />
     </View>
   );

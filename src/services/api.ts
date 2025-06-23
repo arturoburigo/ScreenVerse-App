@@ -12,12 +12,21 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const token = await tokenCache.getToken(tokenCache.ACCESS_TOKEN_KEY);
+    console.log('Interceptor - Token exists:', !!token);
+    console.log('Interceptor - Token preview:', token ? `${token.substring(0, 20)}...` : 'No token');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Interceptor - Authorization header set:', config.headers.Authorization);
+    } else {
+      console.log('Interceptor - No token found, request will be sent without Authorization');
     }
+    
+    console.log('Interceptor - Full headers:', config.headers);
     return config;
   },
   (error) => {
+    console.error('Interceptor - Request error:', error);
     return Promise.reject(error);
   }
 );

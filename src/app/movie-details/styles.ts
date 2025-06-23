@@ -6,6 +6,13 @@ export const styles = StyleSheet.create({
     backgroundColor: "#121212",
     padding: 16,
   },
+  backButton: {
+    marginBottom: 50,
+    marginLeft: 4,
+    alignSelf: "flex-start",
+    borderRadius: 20,
+    padding: 4,
+  },
   header: { flexDirection: "row", marginBottom: 16 },
   poster: { width: 120, height: 170, borderRadius: 16 },
   title: { color: "#fff", fontSize: 24, fontWeight: "bold", marginBottom: 8 },
