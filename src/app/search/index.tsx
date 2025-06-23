@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import SearchBar from "@/components/SearchBar";
 import { styles } from "./styles";
-import { searchService, SearchResult } from "@/services/searchService";
+import { searchService, SearchResult } from "../../services/searchService";
 
 export default function Search() {
   const [search, setSearch] = useState("");
@@ -21,7 +21,7 @@ export default function Search() {
     setLoading(true);
     try {
       const searchResults = await searchService.search(search.trim());
-      console.log('Search results with posters:', searchResults.map(r => ({ title: r.title, poster: r.poster })));
+      console.log('Search results:', searchResults);
       setResults(searchResults);
     } catch (error) {
       console.error('Erro na busca:', error);
@@ -33,22 +33,28 @@ export default function Search() {
   };
 
   const handleItemPress = (item: SearchResult) => {
-    console.log('Navigating to movie details:', item);
+    console.log('Navigating with item:', item);
+    
+    // Garantir que todos os dados estejam presentes e no formato correto
+    const params = {
+      id: item.id,
+      title: item.title,
+      poster: item.poster || '',
+      type: item.type || 'movie',
+      year: item.year?.toString() || '',
+      description: item.description || ''
+    };
+    
+    console.log('Navigation params:', params);
+    
     router.push({
       pathname: "/movie-details",
-      params: { 
-        id: item.id,
-        title: item.title,
-        poster: item.poster,
-        type: item.type,
-        year: item.year?.toString(),
-        description: item.description
-      }
+      params: params
     });
   };
 
   const renderResult = ({ item }: { item: SearchResult }) => {
-    console.log('Rendering item:', item.title, 'with poster:', item.poster);
+    console.log('Rendering item:', item);
     
     return (
       <TouchableOpacity 
@@ -63,7 +69,6 @@ export default function Search() {
               style={styles.poster}
               resizeMode="cover"
               onError={(error) => console.log('Image error for', item.title, ':', error.nativeEvent.error)}
-              onLoad={() => console.log('Image loaded successfully for:', item.title)}
             />
           ) : (
             <Ionicons 

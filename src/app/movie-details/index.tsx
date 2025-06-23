@@ -1,15 +1,23 @@
-import React from "react";
-import { View, Text, Image, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, Image, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import movies from "@/utils/movies.json";
+import series from "@/utils/series.json";
+import recommended from "@/utils/recommended.json";
 import { Ionicons, MaterialIcons, Feather, AntDesign } from "@expo/vector-icons";
 import { styles } from "./styles";
 import { Header } from "@/components/Header";
 import BottomNavbar from "@/components/Navbar";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { watchlistService } from "@/services/watchlistService";
+import { ratedService } from "@/services/ratedService";
 
 export default function MovieDetails() {
   const params = useLocalSearchParams();
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [isRated, setIsRated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [watchlistItemId, setWatchlistItemId] = useState<number | null>(null);
+  const [ratedItemId, setRatedItemId] = useState<number | null>(null);
   
   // Verificar se veio da busca (com parâmetros) ou da lista local
   const isFromSearch = params.title && params.poster;
@@ -31,13 +39,46 @@ export default function MovieDetails() {
       similar_titles: []
     };
   } else {
-    // Buscar na lista local de filmes
-    movie = movies.find((m) => String(m.id) === String(params.id));
+    // Buscar na lista local de filmes, séries e recomendados
+    movie = movies.find((m) => String(m.id) === String(params.id)) || 
+            series.find((s) => String(s.id) === String(params.id)) ||
+            recommended.find((r) => String(r.id) === String(params.id));
   }
 
   // Busca seasons e episodes do primeiro source, se existir
   const seasons = movie?.sources?.[0]?.seasons;
   const episodes = movie?.sources?.[0]?.episodes;
+
+  useEffect(() => {
+    checkMovieStatus();
+  }, [movie?.id]);
+
+  const checkMovieStatus = async () => {
+    if (!movie?.id) return;
+    
+    setLoading(true);
+    try {
+      const titleId = Array.isArray(movie.id) ? parseInt(movie.id[0]) : (typeof movie.id === 'string' ? parseInt(movie.id) : movie.id);
+      
+      // Check if in watchlist
+      const watchlistItem = await watchlistService.isInWatchlist(titleId);
+      if (watchlistItem) {
+        setIsInWatchlist(true);
+        setWatchlistItemId(watchlistItem.id);
+      }
+      
+      // Check if rated
+      const ratedItem = await ratedService.isRatedByUser(titleId);
+      if (ratedItem) {
+        setIsRated(true);
+        setRatedItemId(ratedItem.id);
+      }
+    } catch (error) {
+      console.error('Error checking movie status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!movie) {
     return (
@@ -47,43 +88,62 @@ export default function MovieDetails() {
     );
   }
 
-  const saveWatchlist = async () => {
+  const handleWatchlist = async () => {
     try {
-      const existingWatchlist = JSON.parse(
-        (await AsyncStorage.getItem("watchlistMovies")) || "[]"
-      );
-
-      // Verifica se o filme já está na watchlist para não duplicar
-      const isAlreadyInWatchlist = existingWatchlist.some(
-        (item: any) => item.id === movie?.id
-      );
-
-      if (isAlreadyInWatchlist) {
-        console.log("Filme já está na watchlist.");
-        router.push("/myspace"); // Apenas navega se já existir
-        return;
+      const titleId = typeof movie.id === 'string' ? parseInt(movie.id) : movie.id;
+      
+      if (isInWatchlist && watchlistItemId) {
+        // Remove from watchlist
+        await watchlistService.deleteWatchlistItem(watchlistItemId);
+        setIsInWatchlist(false);
+        setWatchlistItemId(null);
+        Alert.alert('Sucesso', 'Removido da watchlist');
+      } else {
+        // Add to watchlist
+        const watchlistItem = {
+          titleId: Array.isArray(movie.id) ? parseInt(movie.id[0]) : (typeof movie.id === 'string' ? parseInt(movie.id) : movie.id),
+          name: movie.title,
+          poster: movie.posterMedium,
+          type: movie.type || 'movie',
+          year: movie.year ? (typeof movie.year === 'string' ? parseInt(movie.year) : movie.year) : undefined,
+          plotOverview: movie.plot_overview,
+          genreName: movie.genre_names?.join(', ') || '',
+          watched: false
+        };
+        
+        console.log('Adding to watchlist:', watchlistItem);
+        
+        const response = await watchlistService.addToWatchlist(watchlistItem);
+        setIsInWatchlist(true);
+        setWatchlistItemId(response.id);
+        Alert.alert('Sucesso', 'Adicionado à watchlist');
       }
-
-      const addWatchlist = {
-        id: movie?.id,
-        title: movie?.title,
-        poster: movie?.posterMedium,
-        type: movie?.type,
-        watched: false, // Adiciona o estado 'watched'
-      };
-
-      const updatedWatchlist = [...existingWatchlist, addWatchlist];
-
-      // Salva na chave correta: "watchlistMovies"
-      await AsyncStorage.setItem(
-        "watchlistMovies",
-        JSON.stringify(updatedWatchlist)
-      );
-
-      router.push("/myspace");
-    } catch (error) {
-      console.error("Erro ao salvar na watchlist:", error);
+    } catch (error: any) {
+      console.error('Error handling watchlist:', error);
+      if (error.response?.status === 409) {
+        Alert.alert('Aviso', 'Este título já está na sua watchlist');
+      } else {
+        Alert.alert('Erro', 'Erro ao atualizar watchlist');
+      }
     }
+  };
+
+  const handleRate = () => {
+    const titleId = typeof movie.id === 'string' ? parseInt(movie.id) : movie.id;
+    
+    router.push({
+      pathname: "../rate",
+      params: { 
+        id: titleId,
+        title: movie.title,
+        poster: movie.posterMedium,
+        type: movie.type || 'movie',
+        year: movie.year || '',
+        plotOverview: movie.plot_overview || '',
+        genreName: movie.genre_names?.join(', ') || '',
+        ratedId: ratedItemId || undefined
+      },
+    });
   };
 
   return (
@@ -119,42 +179,39 @@ export default function MovieDetails() {
           <Text style={styles.overview}>{movie.plot_overview}</Text>
         )}
         
-        {/* Seção de relacionados apenas se houver dados */}
-        {movie.similar_titles && movie.similar_titles.length > 0 && (
-          <>
-            <Text style={styles.section}>Relacionados</Text>
-            <View style={styles.relatedRow}>
-              {movie.similar_titles?.slice(0, 4).map((relatedId, idx) => {
-                const related = movies.find((m) => m.id === relatedId);
-                if (!related) return null;
-                return (
-                  <Image
-                    key={idx}
-                    source={{ uri: related.posterMedium }}
-                    style={styles.relatedImg}
-                  />
-                );
-              })}
-            </View>
-          </>
-        )}
-        
         <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.watchlistBtn}>
-            <Text style={styles.btnText} onPress={saveWatchlist}>
-              Watchlist
-            </Text>
+          <TouchableOpacity 
+            style={[styles.watchlistBtn, isInWatchlist && styles.watchlistBtnActive]} 
+            onPress={handleWatchlist}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <>
+                <Ionicons 
+                  name={isInWatchlist ? "checkmark-circle" : "add-circle-outline"} 
+                  size={20} 
+                  color="#000" 
+                  style={{ marginRight: 4 }}
+                />
+                <Text style={styles.btnText}>
+                  {isInWatchlist ? 'Na Watchlist' : 'Watchlist'}
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.rateBtn}
-            onPress={() => {
-              router.push({
-                pathname: "../rate",
-                params: { id: movie.id, title: movie.title },
-              });
-            }}
+            style={[styles.rateBtn, isRated && styles.rateBtnActive]}
+            onPress={handleRate}
           >
-            <Text style={styles.btnText}>Rate</Text>
+            <AntDesign 
+              name={isRated ? "star" : "staro"} 
+              size={20} 
+              color="#000" 
+              style={{ marginRight: 4 }}
+            />
+            <Text style={styles.btnText}>{isRated ? 'Rated' : 'Rate'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

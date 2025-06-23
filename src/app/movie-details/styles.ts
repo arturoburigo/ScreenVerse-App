@@ -7,8 +7,8 @@ export const styles = StyleSheet.create({
     padding: 16,
   },
   backButton: {
-    marginBottom: 50,
-    marginLeft: 4,
+    marginBottom: 8,
+    paddingHorizontal: 16,
     alignSelf: "flex-start",
     borderRadius: 20,
     padding: 4,
@@ -53,6 +53,9 @@ export const styles = StyleSheet.create({
     marginRight: 8,
     alignItems: "center",
   },
+  watchlistBtnActive: {
+    backgroundColor: "#1e40af",
+  },
   rateBtn: {
     backgroundColor: "#FFD700",
     borderRadius: 16,
@@ -60,6 +63,9 @@ export const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     alignItems: "center",
+  },
+  rateBtnActive: {
+    backgroundColor: "#eab308",
   },
   btnText: { color: "#000", fontWeight: "bold", fontSize: 16 },
 });

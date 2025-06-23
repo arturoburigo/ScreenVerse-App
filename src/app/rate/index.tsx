@@ -1,50 +1,54 @@
-import { View, Text, Image, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, Image, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { styles } from "./styles";
 import { router, useLocalSearchParams } from "expo-router";
-import movies from "@/utils/movies.json";
 import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ratedService } from "@/services/ratedService";
 
 export default function Rate() {
-  const { id, idRate } = useLocalSearchParams();
-  const movie = movies.find((m) => String(m.id) === id);
+  const params = useLocalSearchParams();
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  const [existingRatedId, setExistingRatedId] = useState<number | null>(null);
+
+  // Extract movie data from params
+  const movieData = {
+    id: params.id as string,
+    title: params.title as string,
+    poster: params.poster as string,
+    type: params.type as string,
+    year: params.year as string,
+    plotOverview: params.plotOverview as string,
+    genreName: params.genreName as string,
+  };
 
   useEffect(() => {
-    const loadPreviousReview = async () => {
-      // Apenas carrega a avaliação se um idRate for fornecido (modo de edição)
-      if (idRate) {
-        try {
-          const savedMovies = JSON.parse(
-            (await AsyncStorage.getItem("ratedMovies")) || "[]"
-          );
-          const movieReview = savedMovies.find(
-            (m: any) => String(m.idRate) === String(idRate)
-          );
-          if (movieReview) {
-            setRating(movieReview.rating);
-            setReview(movieReview.review);
-          } else {
-            setRating(0);
-            setReview("");
-          }
-        } catch (error) {
-          console.error("Erro ao carregar avaliação anterior:", error);
-          setRating(0);
-          setReview("");
-        }
-      } else {
-        // Se não houver idRate, começa com os campos limpos para uma nova avaliação
-        setRating(0);
-        setReview("");
+    loadExistingRating();
+  }, [movieData.id]);
+
+  const loadExistingRating = async () => {
+    if (!movieData.id) return;
+    
+    setLoadingData(true);
+    try {
+      const titleId = parseInt(movieData.id);
+      const existingRating = await ratedService.isRatedByUser(titleId);
+      
+      if (existingRating) {
+        setRating(existingRating.rating);
+        setReview(existingRating.plotOverview || "");
+        setExistingRatedId(existingRating.id);
       }
-    };
-    loadPreviousReview();
-  }, [idRate]);
+    } catch (error) {
+      console.error('Error loading existing rating:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   const handleRating = (rate: number) => {
     if (rating === rate - 0.5) {
@@ -65,62 +69,67 @@ export default function Rate() {
   };
 
   const saveReview = async () => {
+    if (rating === 0) {
+      Alert.alert('Atenção', 'Por favor, selecione uma avaliação');
+      return;
+    }
+
+    setLoading(true);
     try {
-      const existingReviews = JSON.parse(
-        (await AsyncStorage.getItem("ratedMovies")) || "[]"
-      );
+      const titleId = parseInt(movieData.id);
+      
+      const ratedItem = {
+        titleId: titleId,
+        name: movieData.title,
+        rating: rating,
+        watched: true,
+        plotOverview: review || movieData.plotOverview || '',
+        year: movieData.year ? parseInt(movieData.year) : undefined,
+        type: movieData.type || 'movie',
+        genreName: movieData.genreName || '',
+        poster: movieData.poster || ''
+      };
 
-      // Modo de edição: idRate está presente
-      if (idRate) {
-        const updatedReviews = existingReviews.map((r: any) => {
-          if (String(r.idRate) === String(idRate)) {
-            return { ...r, rating, review };
-          }
-          return r;
-        });
-        await AsyncStorage.setItem(
-          "ratedMovies",
-          JSON.stringify(updatedReviews)
-        );
+      console.log('Saving rated item:', ratedItem);
+
+      if (existingRatedId) {
+        // Update existing rating - send all fields
+        await ratedService.updateRatedItem(existingRatedId, ratedItem);
+        Alert.alert('Sucesso', 'Avaliação atualizada com sucesso!');
       } else {
-        // Modo de criação/atualização: idRate não está presente, usa o id do filme
-        const existingReviewIndex = existingReviews.findIndex(
-          (r: any) => String(r.id) === String(id)
-        );
-
-        if (existingReviewIndex !== -1) {
-          const lastIdRate =
-            existingReviews.length > 0
-              ? Math.max(0, ...existingReviews.map((r: any) => r.idRate || 0))
-              : 0;
-          const newReview = {
-            idRate: lastIdRate + 1,
-            id: movie?.id,
-            title: movie?.title,
-            poster: movie?.posterMedium,
-            rating,
-            review,
-            type: movie?.type,
-          };
-          const updatedReviews = [...existingReviews, newReview];
-          await AsyncStorage.setItem(
-            "ratedMovies",
-            JSON.stringify(updatedReviews)
-          );
-        }
+        // Create new rating
+        await ratedService.rateTitle(ratedItem);
+        Alert.alert('Sucesso', 'Filme avaliado com sucesso!');
       }
 
-      router.push("/myspace");
-    } catch (error) {
-      console.error("Erro ao salvar avaliação:", error);
+      router.back();
+    } catch (error: any) {
+      console.error('Error saving review:', error);
+      if (error.response?.status === 409) {
+        Alert.alert('Erro', 'Este título já foi avaliado');
+      } else {
+        Alert.alert('Erro', 'Erro ao salvar avaliação');
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loadingData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Header />
-      <Text style={styles.title}>{movie?.title}</Text>
-      <Image source={{ uri: movie?.posterMedium }} style={styles.poster} />
+      <Text style={styles.title}>{movieData.title}</Text>
+      {movieData.poster && (
+        <Image source={{ uri: movieData.poster }} style={styles.poster} />
+      )}
 
       <View style={styles.starsContainer}>
         {[1, 2, 3, 4, 5].map((rate) => (
@@ -137,17 +146,41 @@ export default function Rate() {
           </TouchableOpacity>
         ))}
       </View>
-      <Text style={styles.reviewText}>Deixe seu comentário</Text>
+      
+      <Text style={styles.ratingText}>
+        {rating > 0 ? `Sua avaliação: ${rating}` : 'Toque nas estrelas para avaliar'}
+      </Text>
+      
+      <Text style={styles.reviewText}>Deixe seu comentário (opcional)</Text>
       <TextInput
         style={styles.input}
-        placeholder="Dê uma nota sobre o filme"
+        placeholder="O que você achou do filme?"
         placeholderTextColor="#888"
         value={review}
         onChangeText={setReview}
+        multiline
+        numberOfLines={4}
+        textAlignVertical="top"
       />
-      <TouchableOpacity style={styles.button} onPress={saveReview}>
-        <Text style={styles.buttonText}>Salvar</Text>
+      
+      <TouchableOpacity 
+        style={[styles.button, loading && styles.buttonDisabled]} 
+        onPress={saveReview}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>
+            {existingRatedId ? 'Atualizar Avaliação' : 'Salvar Avaliação'}
+          </Text>
+        )}
       </TouchableOpacity>
+      
+      <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
+        <Text style={styles.cancelButtonText}>Cancelar</Text>
+      </TouchableOpacity>
+      
       <Navbar />
     </View>
   );
