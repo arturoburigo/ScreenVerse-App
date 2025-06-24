@@ -211,7 +211,7 @@ export default function MovieDetails() {
               color="#000" 
               style={{ marginRight: 4 }}
             />
-            <Text style={styles.btnText}>{isRated ? 'Rated' : 'Rate'}</Text>
+            <Text style={styles.btnText}>{isRated ? 'Avaliado' : 'Avaliar'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
