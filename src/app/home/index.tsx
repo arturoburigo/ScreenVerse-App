@@ -3,6 +3,8 @@ import { useUser } from "@clerk/clerk-expo";
 import { Text, View, StyleSheet, ScrollView } from "react-native";
 import { styles } from "./styles";
 import Card from "@/components/Card";
+import { NotificationSettings } from "@/components/NotificationSettings";
+import { SimpleNotificationTest } from "@/components/SimpleNotificationTest";
 import { useRouter } from "expo-router";
 import movies from "@/utils/movies.json";
 import series from "@/utils/series.json";
@@ -23,14 +25,26 @@ export default function Home() {
   const handleRecommendedPress = (itemId: number) => {
     router.push(`/movie-details?id=${itemId}`);
   };
-
   return (
     <View style={styles.container}>
-      <Header />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }}>
+      <Header />{" "}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
+        {/* Teste Simples de Notificações */}
+        {/* <SimpleNotificationTest /> */}
+
+        {/* Configurações de Notificação */}
+        <NotificationSettings showTestButton={true} />
+
         <View style={styles.content}>
           <Text style={styles.text}>Recomendados</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 2 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginVertical: 2 }}
+          >
             {recommended.map((item) => (
               <Card
                 key={item.id}
@@ -44,7 +58,11 @@ export default function Home() {
         </View>
         <View style={styles.content}>
           <Text style={styles.text}>Filmes</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 2 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginVertical: 2 }}
+          >
             {movies.map((movie) => (
               <Card
                 key={movie.id}
@@ -58,7 +76,11 @@ export default function Home() {
         </View>
         <View style={styles.content}>
           <Text style={styles.text}>Séries</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 2 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginVertical: 2 }}
+          >
             {series.map((serie) => (
               <Card
                 key={serie.id}
